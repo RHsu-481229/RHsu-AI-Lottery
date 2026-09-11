@@ -521,31 +521,51 @@ if game_selected == "威力彩":
         super_sec_input = st.number_input("第二區 特別號", min_value=1, max_value=8, value=2)
 
 # ----------------------------------------------------
-# 5. 執行融合計算與視覺化 (全彩券解鎖與 3/4星彩終極置中硬校正)
+# 5. 執行融合計算與視覺化 (全機種橫向多欄集體靠左緊密化・究極完全體拆分版 - 1)
 # ----------------------------------------------------
-# 🌟【Sophia 修正】解鎖縮排！將分析按鈕抽回頂層，讓所有彩券類型同步回歸浮現
 if st.button("⚡ 啟動雙模大數據融合分析"):
+    # 💡【Sophia 終極網頁層硬校正】自訂 CSS：強制限制靜態表格寬度，並將所有 st.columns 橫向多欄容器徹底往最左邊推齊，粉碎平均拉伸甩尾！
+    st.markdown("""
+        <style>
+            /* 強制讓所有大數據表格限制最大寬度為 240px 且絕對靠左 */
+            div[data-testid="stTable"] { max-width: 240px !important; margin-left: 0 !important; margin-right: auto !important; }
+            div[data-testid="stTable"] th, div[data-testid="stTable"] td { text-align: center !important; }
+
+            /* 🌟【核心關鍵】鎖定 3星、4星、威力彩的多欄排版實體外框(HorizontalBlock)，強制集體向流向靠攏緊密並排 */
+            div[data-testid="stHorizontalBlock"] {
+                justify-content: flex-start !important;
+                gap: 20px !important; /* 設定欄與欄之間精緻的科技感間距 */
+            }
+            /* 限制多欄中每一欄的最高拉伸寬度，防止手機或大螢幕上自動撐開變形 */
+            div[data-testid="stHorizontalBlock"] > div {
+                max-width: 260px !important;
+                width: 100% !important;
+                flex: none !important;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
     if game_selected in ["3星彩", "4星彩"]:
         st.markdown(f"### 🎯 [{game_selected}] 位置正彩精確預測")
         cols_res = st.columns(len(pos_cols))
         for i, pos in enumerate(pos_cols):
             with cols_res[i]:
-                df_pos = get_dual_mode_stats(game_selected, input_numbers[i], limit_periods=period_range,
-                                             position_col=pos)
+                df_pos = get_dual_mode_stats(game_selected, input_numbers[i], limit_periods=period_range, position_col=pos)
                 if not df_pos.empty:
                     df_pos.columns = ['預測數字', '歷史次數']
                     df_pos = df_pos.sort_values(by='歷史次數', ascending=False)
 
-                    # 指標卡同步優化置中
-                    st.metric(f"{ball_labels[i]} 首選", f" {df_pos['預測數字'].iloc[0]} ")
+                    # 💡 使用 iat 安全抓取預測首選數字
+                    val_champion = df_pos['預測數字'].iat[0]
+                    st.metric(f"{ball_labels[i]} 首選", f" {val_champion} ")
 
-                    # 🌟【終極置中】將 3/4星彩改用 HTML 架構的 st.table，強制表頭文字與數值 100% 完美對齊正中央
                     df_pos_render = df_pos.copy()
                     df_pos_render['預測數字'] = df_pos_render['預測數字'].astype(str)
                     df_pos_render['歷史次數'] = df_pos_render['歷史次數'].astype(str)
 
-                    # 套用精緻的暖橘色戰情漸層熱圖
-                    st.table(df_pos_render.style.background_gradient(cmap='Oranges', subset=['歷史次數']))
+                    # 💡【Sophia 終極爆破盲點】直接把「預測數字」硬生生設為實體 Index！重複列從底層架構上 100% 永久蒸發！
+                    df_pos_final = df_pos_render.set_index('預測數字')
+                    st.table(df_pos_final.style.background_gradient(cmap='Oranges', subset=['歷史次數']))
     else:
         # 大樂透 / 539 / 威力彩第一區（核心融合渲染）
         master_df = pd.DataFrame({'b': range(1, max_ball + 1), '落球總次數': 0.0, '大小總次數': 0.0})
@@ -560,7 +580,6 @@ if st.button("⚡ 啟動雙模大數據融合分析"):
         master_df = master_df.sort_values(by='AI 綜合融合得分', ascending=False).reset_index(drop=True)
         master_df.columns = ['球號', '歷史落球累計', '歷史大小累計', 'AI 綜合融合得分']
 
-        # ❄️ 冷門球過濾核心邏輯
         if enable_filter:
             cold_ones = get_cold_numbers(game_selected, filter_limit)
             if cold_ones:
@@ -578,7 +597,10 @@ if st.button("⚡ 啟動雙模大數據融合分析"):
             col_z1, col_z2 = st.columns([3, 1])
             with col_z1:
                 st.markdown("### 🔵 第一區雙模加權融合結果")
-                st.metric("雙模制霸黃金首選球", f"{int(master_df['球號'].iloc[0]):02d} 號")
+                val_super_champ = master_df['球號'].iat[0]
+                st.metric("雙模制霸黃金首選球", f"{int(val_super_champ):02d} 號")
+
+                # 大樂透/539/威力彩第一區原本就自帶一體化 Index 隱除
                 st.table(render_df.style.background_gradient(cmap='Blues', subset=['AI 綜合融合得分']))
                 st.bar_chart(master_df.set_index('球號')['AI 綜合融合得分'], color='#1f77b4')
 
@@ -589,11 +611,17 @@ if st.button("⚡ 啟動雙模大數據融合分析"):
                 if not df_sec.empty:
                     df_sec.columns = ['球號', '次數']
                     df_sec = df_sec.sort_values(by='次數', ascending=False)
-                    st.metric("第二區天選球", f"{int(df_sec['球號'].iloc[0]):02d} 號")
+
+                    val_sec_champ = df_sec['球號'].iat[0]
+                    st.metric("第二區天選球", f"{int(val_sec_champ):02d} 號")
+
                     df_sec_render = df_sec.copy()
                     df_sec_render['球號'] = df_sec_render['球號'].apply(lambda x: f"{int(x):02d}")
                     df_sec_render['次數'] = df_sec_render['次數'].apply(lambda x: f"{int(x)}")
-                    st.table(df_sec_render.style.background_gradient(cmap='Reds', subset=['次數']))
+
+                    # 💡【威力彩第二區完美除錯】直接把「球號」硬塞為實體 Index！多餘的流水號重複列瞬間灰飛煙滅！
+                    df_sec_final = df_sec_render.set_index('球號')
+                    st.table(df_sec_final.style.background_gradient(cmap='Reds', subset=['次數']))
         else:
             # 📊 大樂透 / 539 展示
             st.markdown(f"### 📊 [{game_selected}] 雙模綜合加權算力看板")
@@ -603,52 +631,85 @@ if st.button("⚡ 啟動雙模大數據融合分析"):
             st.table(render_df.style.background_gradient(cmap='Blues', subset=['AI 綜合融合得分']))
             st.bar_chart(master_df.set_index('球號')['AI 綜合融合得分'], color='#1f77b4')
 
+            # ====================================================
+            # 👑【Sophia 終極融合：連碰包牌智庫】AI 交叉火熱碰數智慧推薦明牌
+            # ====================================================
+            st.markdown("---")
+            st.markdown(
+                "<h2 style='text-align: center; width: 100%; color: #111111; margin-bottom: 25px;'>🏆 AI 雙模交叉火熱碰數智慧推薦明牌</h2>",
+                unsafe_allow_html=True)
+            st.caption(
+                "💡 智慧智庫：依據上方 AI 綜合融合得分（已排除冰封冷門球），系統為您自動精選最火熱的冠軍球號進行聰明連碰演算。")
+
+            top_balls = master_df['球號'].head(6).astype(int).tolist()
+            top_balls_str = [f"{x:02d}" for x in sorted(top_balls)]
+            st.success(f"🔥 當前雙模制霸最強 6 碼核心明牌：{', '.join(top_balls_str)} 號")
+
+            p_tab2, p_tab3, p_tab4 = st.tabs(["🍀 二連碰推薦 (2星)", "🌟 三連碰推薦 (3星)", "👑 四連碰推薦 (4星)"])
+
+            table_style_prefix_320 = """
+                <div style='max-width: 320px; width: 100%; margin-left: 0 !important; margin-right: auto !important; text-align: left;'>
+                <style>
+                    div[data-testid="stTable"] { max-width: 320px !important; margin-left: 0 !important; margin-right: auto !important; }
+                    div[data-testid="stTable"] th, div[data-testid="stTable"] td { text-align: center !important; }
+                </style>
+            """
+
+            with p_tab2:
+                combs_2 = list(itertools.combinations(sorted(top_balls), 2))
+                rows_2 = [{"序號": f"組合 {i:02d}", "火熱二連碰明牌": f"🍀 [ {com0:02d} , {com1:02d} ]"} for
+                          i, (com0, com1) in enumerate(combs_2, 1)]
+                st.markdown(table_style_prefix_320, unsafe_allow_html=True)
+                # 連碰區塊已自帶一體化 index 隱除，100% 安全
+                st.table(pd.DataFrame(rows_2).set_index('序號'))
+                st.markdown("</div>", unsafe_allow_html=True)
+
+            with p_tab3:
+                combs_3 = list(itertools.combinations(sorted(top_balls), 3))
+                rows_3 = [{"序號": f"組合 {i:02d}", "火熱三連碰明牌": f"🌟 [ {com0:02d} , {com1:02d} , {com2:02d} ]"} for
+                          i, (com0, com1, com2) in enumerate(combs_3, 1)]
+                st.markdown(table_style_prefix_320, unsafe_allow_html=True)
+                st.table(pd.DataFrame(rows_3).set_index('序號'))
+                st.markdown("</div>", unsafe_allow_html=True)
+
+            with p_tab4:
+                combs_4 = list(itertools.combinations(sorted(top_balls), 4))
+                rows_4 = [{"序號": f"組合 {i:02d}",
+                           "火熱四連碰明牌": f"👑 [ {com0:02d} , {com1:02d} , {com2:02d} , {com3:02d} ]"} for
+                          i, (com0, com1, com2, com3) in enumerate(combs_4, 1)]
+                st.markdown(table_style_prefix_320, unsafe_allow_html=True)
+                st.table(pd.DataFrame(rows_4).set_index('序號'))
+                st.markdown("</div>", unsafe_allow_html=True)
+
 # ----------------------------------------------------
 # 👑【最高管理員特權區】智慧資料庫控制台 (檢視/修改號碼、清空數據、金鑰自主增減)
 # ----------------------------------------------------
-# 只有登入 admin888 且順利通過前面的 is_admin 判定時，主畫面最下方才會解鎖此終極後台
 if 'is_admin' in locals() and is_admin:
     st.markdown("---")
     st.markdown("## 👑 最高管理員安全控制台 (後台數據中心)")
 
-    # 建立三個精緻的實戰戰情標籤頁面
     tab_data, tab_clear, tab_auth = st.tabs(
-        ["📝 1. 獎號數據檢檢視與修改", "🗑️ 2. 清空某一機種數據", "🔐 3. 用戶授權金鑰自主增減"])
+        ["📝 1. 獎號數據檢視與修改", "🗑️ 2. 清空某一機種數據", "🔐 3. 用戶授權金鑰自主增減"])
 
-    # ------------------------------------------------
-    # 📝 頁面 1：檢視與修改開獎號碼
-    # ------------------------------------------------
     with tab_data:
         st.subheader("📝 歷史開獎號碼智慧管理 (動態 SQL 硬更新)")
-        # 💡【Sophia 精準修正】將 3星彩（lotto_3d）正式納入後台數據庫管理地圖中
-        game_table_map = {
-            "大樂透": "lotto_649",
-            "今彩 539": "lotto_539",
-            "威力彩": "lotto_super",
-            "3星彩": "lotto_3d",  # 👈 補上這行
-            "4星彩": "lotto_4d"
-        }
-
+        game_table_map = {"大樂透": "lotto_649", "今彩 539": "lotto_539", "威力彩": "lotto_super", "3星彩": "lotto_3d",
+                          "4星彩": "lotto_4d"}
         manage_game = st.selectbox("請選擇要管理的彩券類型", list(game_table_map.keys()), key="manage_game_sel")
         target_tbl = game_table_map[manage_game]
 
-        # 讀取目前該機種的所有數據
         conn_m = sqlite3.connect(DB_NAME)
         df_m = pd.read_sql_query(f"SELECT * FROM {target_tbl} ORDER BY period DESC", conn_m)
         conn_m.close()
 
         if not df_m.empty:
             st.caption(f"💡 目前數據庫內已有 {len(df_m)} 期資料。如需微調特定期數，請在下方輸入期別：")
-
-            # 使用大數據過濾器，讓管理員直接指定期數
             edit_period = st.number_input("請輸入要求改或檢視的「期別」", min_value=int(df_m['period'].min()),
                                           max_value=int(df_m['period'].max()), value=int(df_m['period'].max()))
             df_row = df_m[df_m['period'] == edit_period]
 
             if not df_row.empty:
                 st.warning(f"🔔 正在編輯：[{manage_game}] 第 {edit_period} 期之開獎資料")
-
-                # 動態根據欄位生成橫向修改框
                 cols_edit = st.columns(len(df_m.columns) - 1)
                 new_values = {}
                 col_idx = 0
@@ -656,7 +717,7 @@ if 'is_admin' in locals() and is_admin:
                 for col in df_m.columns:
                     if col == 'period': continue
                     with cols_edit[col_idx]:
-                        val_type = df_row[col].iloc[0]
+                        val_type = df_row[col].iat[0]
                         if isinstance(val_type, (int, float)):
                             new_values[col] = st.number_input(f"修改 {col}", value=int(val_type),
                                                               key=f"edit_{col}_{edit_period}")
@@ -665,7 +726,6 @@ if 'is_admin' in locals() and is_admin:
                                                             key=f"edit_{col}_{edit_period}")
                         col_idx += 1
 
-                # 執行寫入變更
                 if st.button(f"💾 儲存第 {edit_period} 期變更並即時校正"):
                     try:
                         conn_up = sqlite3.connect(DB_NAME)
@@ -687,9 +747,6 @@ if 'is_admin' in locals() and is_admin:
         else:
             st.info("💡 目前此機種數據庫內尚無資料。")
 
-    # ------------------------------------------------
-    # 🗑️ 頁面 2：一鍵刪除、清空某種數據 (方便重新導入)
-    # ------------------------------------------------
     with tab_clear:
         st.subheader("🗑️ 資料庫重整中心 (一鍵清空去髒資料)")
         st.error("⚠️ 警告：此操作將會徹底抹除該彩券在本機的所有歷史期數，以便您重新導入最乾淨的 CSV 資料！")
@@ -699,8 +756,6 @@ if 'is_admin' in locals() and is_admin:
         if clear_game != "請選擇":
             clear_tbl = game_table_map[clear_game]
             st.warning(f"💣 您已選取清空：[{clear_game}] 資料表名稱 ({clear_tbl})")
-
-            # 安全防誤觸雙重確認二次勾選鎖
             double_check = st.checkbox(f"我已確認要徹底清空所有的 [{clear_game}] 數據，此動作無法復原。")
             if double_check:
                 if st.button(f"🔥 執行一鍵摧毀並清空 [{clear_game}] 歷史數據庫"):
@@ -716,23 +771,16 @@ if 'is_admin' in locals() and is_admin:
                     except Exception as e_del:
                         st.error(f"❌ 摧毀清空失敗: {str(e_del)}")
 
-    # ------------------------------------------------
-    # 🔐 頁面 3：權限資料庫自主增減修改管理
-    # ------------------------------------------------
     with tab_auth:
         st.subheader("🔐 全球金鑰自主授權中心 (免改程式動態管理)")
-
-        # 讀取目前的所有用戶金鑰著名單
         conn_a = sqlite3.connect(DB_NAME)
         df_a = pd.read_sql_query("SELECT * FROM auth_users", conn_a)
         conn_a.close()
 
-        # 展示目前的用戶列表
         st.markdown("#### 👥 當前合法授權使用者字典列表")
         st.table(df_a)
 
         st.markdown("---")
-        # 橫向切分：新增使用者 與 刪除使用者
         col_add, col_del = st.columns(2)
 
         with col_add:
@@ -761,10 +809,10 @@ if 'is_admin' in locals() and is_admin:
 
         with col_del:
             st.markdown("##### ➖ 徹底註銷/刪除使用者授權")
-            st.caption("💡 只要在這裡將特定金鑰註銷，該使用者下次登入就會被全網強行中斷鎖定。")
+            st.caption("💡 只要在這裡將特定金鑰註銷，該使用者下次登入就會變全網強行中斷鎖定。")
             del_key = st.selectbox("請選取您要「徹底註銷、收回權限」的金鑰密碼", ["請選擇"] + df_a['user_key'].tolist())
 
-            if del_key != "請選擇" and del_key != "admin888":  # 防止管理員不小心把自己刪除
+            if del_key != "請選擇" and del_key != "admin888":
                 st.warning(f"🚨 確定要收回該使用者的所有算力權限嗎？")
                 if st.button("🗑️ 確定執行強行註銷"):
                     try:
