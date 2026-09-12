@@ -492,19 +492,76 @@ except Exception as e_check:
     st.caption(f"❌ 數據庫看板讀取失敗。錯誤訊息: {str(e_check)}")
 
 # ----------------------------------------------------
-# 📌【核心補修】主畫面動態變數配置與獎號手動輸入區
+# 📌【核心升級：智慧連動】自動撈取資料庫最新一期獎號加載引擎 (拆分版 - 1)
+# ----------------------------------------------------
+# 💡 初始化動態預載獎號容器（如資料庫完全空了，則啟動您的黃金備援預設值）
+db_latest_vals = []
+
+try:
+    conn_load = sqlite3.connect(DB_NAME)
+    cursor_load = conn_load.cursor()
+
+    if game_selected == "大樂透":
+        cursor_load.execute(
+            "SELECT num1, num2, num3, num4, num5, num6, sp_num FROM lotto_649 ORDER BY period DESC LIMIT 1")
+        row_load = cursor_load.fetchone()
+        db_latest_vals = list(row_load) if row_load else [11, 20, 23, 33, 34, 44, 2]
+    elif game_selected == "今彩 539":
+        cursor_load.execute("SELECT num1, num2, num3, num4, num5 FROM lotto_539 ORDER BY period DESC LIMIT 1")
+        row_load = cursor_load.fetchone()
+        db_latest_vals = list(row_load) if row_load else [1, 2, 3, 4, 5]
+    elif game_selected == "威力彩":
+        cursor_load.execute(
+            "SELECT num1, num2, num3, num4, num5, num6, sec_num FROM lotto_super ORDER BY period DESC LIMIT 1")
+        row_load = cursor_load.fetchone()
+        db_latest_vals = list(row_load) if row_load else [1, 2, 3, 4, 5, 6, 2]
+    elif game_selected == "3星彩":
+        cursor_load.execute("SELECT hundreds, tens, units FROM lotto_3d ORDER BY period DESC LIMIT 1")
+        row_load = cursor_load.fetchone()
+        db_latest_vals = list(row_load) if row_load else [8, 7, 0]
+    elif game_selected == "4星彩":
+        cursor_load.execute("SELECT thousands, hundreds, tens, units FROM lotto_4d ORDER BY period DESC LIMIT 1")
+        row_load = cursor_load.fetchone()
+        db_latest_vals = list(row_load) if row_load else [1, 2, 8, 0]
+
+    conn_load.close()
+except Exception as e_load:
+    # 備援防護：若本機資料庫未初始化，自動加載初始黃金預設值，保證網頁絕不卡死
+    if game_selected == "大樂透":
+        db_latest_vals = [11, 20, 23, 33, 34, 44, 2]
+    elif game_selected == "今彩 539":
+        db_latest_vals = [1, 2, 3, 4, 5]
+    elif game_selected == "威力彩":
+        db_latest_vals = [1, 2, 3, 4, 5, 6, 2]
+    elif game_selected == "3星彩":
+        db_latest_vals = [8, 7, 0]
+    elif game_selected == "4星彩":
+        db_latest_vals = [1, 2, 8, 0]
+# ----------------------------------------------------
+# ⚙️ 五大彩券種類動態規格與預載值映射配置 (拆分版 - 2)
 # ----------------------------------------------------
 if game_selected == "大樂透":
-    max_ball, ball_labels, pos_cols, default_vals = 49, ["第1落球", "第2落球", "第3落球", "第4落球", "第5落球", "第6落球"], None, [11, 20, 23, 33, 34, 44]
+    max_ball, ball_labels, pos_cols = 49, ["第1落球", "第2落球", "第3落球", "第4落球", "第5落球", "第6落球"], None
+    # 自動抓取資料庫前 6 碼
+    default_vals = db_latest_vals[:6]
 elif game_selected == "今彩 539":
-    max_ball, ball_labels, pos_cols, default_vals = 39, ["第1落球", "第2落球", "第3落球", "第4落球", "第5落球"], None, [1, 2, 3, 4, 5]
+    max_ball, ball_labels, pos_cols = 39, ["第1落球", "第2落球", "第3落球", "第4落球", "第5落球"], None
+    # 自動抓取資料庫前 5 碼
+    default_vals = db_latest_vals[:5]
 elif game_selected == "威力彩":
-    max_ball, ball_labels, pos_cols, default_vals = 38, ["第一區 落球1", "第一區 落球2", "第一區 落球3", "第一區 落球4", "第一區 落球5", "第一區 落球6"], None, [1, 2, 3, 4, 5, 6]
+    max_ball, ball_labels, pos_cols = 38, ["第一區 落球1", "第一區 落球2", "第一區 落球3", "第一區 落球4", "第一區 落球5", "第一區 落球6"], None
+    # 自動抓取資料庫前 6 碼
+    default_vals = db_latest_vals[:6]
 elif game_selected == "3星彩":
-    max_ball, ball_labels, pos_cols, default_vals = 9, ["佰位", "拾位", "個位"], ["hundreds", "tens", "units"], [8, 7, 0]
+    max_ball, ball_labels, pos_cols = 9, ["佰位", "拾位", "個位"], ["hundreds", "tens", "units"]
+    default_vals = db_latest_vals[:3]
 elif game_selected == "4星彩":
-    max_ball, ball_labels, pos_cols, default_vals = 9, ["千位", "佰位", "拾位", "個位"], ["thousands", "hundreds", "tens", "units"], [1, 2, 8, 0]
+    max_ball, ball_labels, pos_cols = 9, ["千位", "佰位", "拾位", "個位"], ["thousands", "hundreds", "tens", "units"]
+    default_vals = db_latest_vals[:4]
 
+# ----------------------------------------------------
+# 🔮 主畫面動態橫向輸入格生成 (已注入動態金鑰：100% 刷新解鎖快取 - 拆分版 - 3)
+# ----------------------------------------------------
 st.subheader(f"🔮 輸入前一期開出之 [{game_selected}] 獎號 (雙模融合模式)")
 cols_input = st.columns(len(ball_labels) + (1 if game_selected == "威力彩" else 0))
 input_numbers = []
@@ -512,13 +569,19 @@ min_v = 0 if game_selected in ["3星彩", "4星彩"] else 1
 
 for i, label in enumerate(ball_labels):
     with cols_input[i]:
-        num = st.number_input(label, min_value=min_v, max_value=max_ball, value=default_vals[i], key=f"b_{i}")
+        # 🌟【Sophia 終極解鎖】在 key 內注入 game_selected，強迫網頁在切換機種時一秒刷新格子，號碼 100% 自動變換！
+        num = st.number_input(label, min_value=min_v, max_value=max_ball, value=int(default_vals[i]), key=f"b_{game_selected}_{i}")
         input_numbers.append(num)
 
+# ----------------------------------------------------
+# 🔴 威力彩第二區特別號自動連動對齊 (型態對齊精密修正版 - 拆分版 - 4)
+# ----------------------------------------------------
 super_sec_input = 2  # 預防非威力彩模式點分析時發生變數未定義錯誤
 if game_selected == "威力彩":
     with cols_input[-1]:
-        super_sec_input = st.number_input("第二區 特別號", min_value=1, max_value=8, value=2)
+        # 💡【Sophia 精準修正】利用 db_latest_vals[-1] 精準指定抓取陣列的最後一個元素(即第 7 碼 sec_num)，徹底消滅型態錯誤！
+        val_sec_default = db_latest_vals[-1] if len(db_latest_vals) >= 7 else 2
+        super_sec_input = st.number_input("第二區 特別號", min_value=1, max_value=8, value=int(val_sec_default), key=f"super_sec_key_lock_{game_selected}")
 
 # ----------------------------------------------------
 # 5. 執行融合計算與視覺化 (全機種橫向多欄集體靠左緊密化・究極完全體拆分版 - 1)
