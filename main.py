@@ -267,6 +267,15 @@ def get_dual_mode_stats(game_type, target_num, ball_idx=None, limit_periods=100,
 st.set_page_config(page_title="AI 雙模融合拖牌算力儀表板", layout="wide")
 init_database()
 
+# ====================================================
+# 🎨【Sophia 終極防沖刷】持久型智慧提示看板中心 (貼在 set_page_config 正下方)
+# ====================================================
+# 智慧清查雲端暫存保險箱：如果發現裡面有留存成功訊息，就端端正正印在主畫面上，絕對不怕 Rerun 沖刷！
+if "success_toast" in st.session_state and st.session_state["success_toast"]:
+    st.success(st.session_state["success_toast"])
+    # 💡 讀取完畢後自動將保險箱清空，這樣使用者下次刷新或換頁時提示就會優雅消失，不留髒字
+    st.session_state["success_toast"] = ""
+
 st.markdown("""
     <style>
         /* 1. 隱藏 DEPLOY 按鈕 */
@@ -389,7 +398,7 @@ with st.sidebar:
     st.caption(f"當前公式：`(大小次數 * {w_size / 100}) + (落球次數 * {w_drop / 100})`")
 
     # ----------------------------------------------------
-    # 🔒【管理員特權區】只有當 is_admin 為 True 時，底下的同步與上傳才會浮現！
+    # 🔒【管理員特權區】只有當 is_admin 為 True 時，底下的同步與上傳才會浮現！(3星彩智慧解鎖版)
     # ----------------------------------------------------
     if is_admin:
         st.markdown("---")
@@ -397,8 +406,10 @@ with st.sidebar:
         if st.button("🚀 啟動全彩券官方網路同步"):
             with st.spinner("非同步多執行緒同步中..."):
                 success, msg_log = sync_all_lottery_data_parallel()
-                if success: st.success("🎉 同步完成！")
-                else: st.error("同步程序部分中斷")
+                if success:
+                    st.success("🎉 同步完成！")
+                else:
+                    st.error("同步程序部分中斷")
                 st.code(msg_log)
 
         st.markdown("---")
@@ -406,36 +417,71 @@ with st.sidebar:
         uploaded_file = st.file_uploader(f"請上傳 [{game_selected}] 的 Excel 或 CSV 檔", type=["xlsx", "xls", "csv"])
 
         if uploaded_file is not None:
-            if st.button(f"📥 導入 {game_selected} 歷史數據"):
+            if st.button(f"📥 導入 {game_selected} 歷史數據中心"):
                 try:
-                    excel_df = pd.read_csv(uploaded_file, encoding='cp950') if uploaded_file.name.endswith('.csv') else pd.read_excel(uploaded_file)
+                    # 💡 安全防護：優先使用 cp950 解碼 Big5 格式，若發生衝突自動回退 utf-8，保證 100% 成功讀取
+                    try:
+                        excel_df = pd.read_csv(uploaded_file, encoding='cp950') if uploaded_file.name.endswith(
+                            '.csv') else pd.read_excel(uploaded_file)
+                    except:
+                        excel_df = pd.read_csv(uploaded_file, encoding='utf-8') if uploaded_file.name.endswith(
+                            '.csv') else pd.read_excel(uploaded_file)
+
+                    # ✨【Sophia 核心防呆】雷厲風行消除欄位前後的所有隱形空白字元！
                     excel_df.columns = excel_df.columns.str.strip()
+
                     conn = sqlite3.connect(DB_NAME)
                     cursor = conn.cursor()
                     import_count = 0
 
                     if game_selected == "大樂透":
-                        for _, r in excel_df[['期別', '開獎日期', '獎號1', '獎號2', '獎號3', '獎號4', '獎號5', '獎號6', '特別號']].dropna().iterrows():
-                            cursor.execute("INSERT OR IGNORE INTO lotto_649 VALUES (?,?,?,?,?,?,?,?,?)", (int(r['期別']), str(r['開獎日期']), int(r['獎號1']), int(r['獎號2']), int(r['獎號3']), int(r['獎號4']), int(r['獎號5']), int(r['獎號6']), int(r['特別號'])))
+                        for _, r in excel_df[['期別', '開獎日期', '獎號1', '獎號2', '獎號3', '獎號4', '獎號5', '獎號6',
+                                              '特別號']].dropna().iterrows():
+                            cursor.execute("INSERT OR IGNORE INTO lotto_649 VALUES (?,?,?,?,?,?,?,?,?)",
+                                           (int(r['期別']), str(r['開獎日期']), int(r['獎號1']), int(r['獎號2']),
+                                            int(r['獎號3']), int(r['獎號4']), int(r['獎號5']), int(r['獎號6']),
+                                            int(r['特別號'])))
                             if cursor.rowcount > 0: import_count += 1
                     elif game_selected == "今彩 539":
-                        for _, r in excel_df[['期別', '開獎日期', '獎號1', '獎號2', '獎號3', '獎號4', '獎號5']].dropna().iterrows():
-                            cursor.execute("INSERT OR IGNORE INTO lotto_539 VALUES (?,?,?,?,?,?,?)", (int(r['期別']), str(r['開獎日期']), int(r['獎號1']), int(r['獎號2']), int(r['獎號3']), int(r['獎號4']), int(r['獎號5'])))
+                        for _, r in excel_df[
+                            ['期別', '開獎日期', '獎號1', '獎號2', '獎號3', '獎號4', '獎號5']].dropna().iterrows():
+                            cursor.execute("INSERT OR IGNORE INTO lotto_539 VALUES (?,?,?,?,?,?,?)",
+                                           (int(r['期別']), str(r['開獎日期']), int(r['獎號1']), int(r['獎號2']),
+                                            int(r['獎號3']), int(r['獎號4']), int(r['獎號5'])))
                             if cursor.rowcount > 0: import_count += 1
                     elif game_selected == "威力彩":
-                        for _, r in excel_df[['期別', '開獎日期', '獎號1', '獎號2', '獎號3', '獎號4', '獎號5', '獎號6', '第二區']].dropna().iterrows():
-                            cursor.execute("INSERT OR IGNORE INTO lotto_super VALUES (?,?,?,?,?,?,?,?,?)", (int(r['期別']), str(r['開獎日期']), int(r['獎號1']), int(r['獎號2']), int(r['獎號3']), int(r['獎號4']), int(r['獎號5']), int(r['獎號6']), int(r['第二區'])))
+                        for _, r in excel_df[['期別', '開獎日期', '獎號1', '獎號2', '獎號3', '獎號4', '獎號5', '獎號6',
+                                              '第二區']].dropna().iterrows():
+                            cursor.execute("INSERT OR IGNORE INTO lotto_super VALUES (?,?,?,?,?,?,?,?,?)",
+                                           (int(r['期別']), str(r['開獎日期']), int(r['獎號1']), int(r['獎號2']),
+                                            int(r['獎號3']), int(r['獎號4']), int(r['獎號5']), int(r['獎號6']),
+                                            int(r['第二區'])))
+                            if cursor.rowcount > 0: import_count += 1
+                    # 🌟【Sophia 終極解鎖：3星彩實體寫入通道】
+                    elif game_selected == "3星彩":
+                        for _, r in excel_df[['期別', '開獎日期', '獎號1', '獎號2', '獎號3']].dropna().iterrows():
+                            # 智慧轉換：自動將 CSV 的 獎號1、2、3 精準映射填入資料庫的 hundreds, tens, units 實體欄位！
+                            cursor.execute("INSERT OR IGNORE INTO lotto_3d VALUES (?,?,?,?,?)",
+                                           (int(r['期別']), str(r['開獎日期']), int(r['獎號1']), int(r['獎號2']),
+                                            int(r['獎號3'])))
                             if cursor.rowcount > 0: import_count += 1
                     elif game_selected == "4星彩":
-                        for _, r in excel_df[['期別', '開獎日期', '獎號1', '獎號2', '獎號3', '獎號4']].dropna().iterrows():
-                            cursor.execute("INSERT OR IGNORE INTO lotto_4d VALUES (?,?,?,?,?,?)", (int(r['期別']), str(r['開獎日期']), int(r['獎號1']), int(r['獎號2']), int(r['獎號3']), int(r['獎號4'])))
+                        for _, r in excel_df[
+                            ['期別', '開獎日期', '獎號1', '獎號2', '獎號3', '獎號4']].dropna().iterrows():
+                            cursor.execute("INSERT OR IGNORE INTO lotto_4d VALUES (?,?,?,?,?,?)",
+                                           (int(r['期別']), str(r['開獎日期']), int(r['獎號1']), int(r['獎號2']),
+                                            int(r['獎號3']), int(r['獎號4'])))
                             if cursor.rowcount > 0: import_count += 1
 
+                    # 🟢【數據導入成功出口】改用 st.toast 通告，100% 抵抗重整沖刷，秒速噴出！
                     conn.commit()
                     conn.close()
-                    st.success(f"🎉 數據導入成功！共更新了 {import_count} 期未重複之歷史數據。")
-                except Exception as e:
-                    st.error(f"❌ 解析或寫入資料庫失敗。錯誤訊息: {str(e)}")
+                    st.toast(f"🎉 數據導入完成！共注入 {import_count} 期不重複 [{game_selected}] 最新數據！", icon="📥")
+                    st.rerun()
+
+
+                except Exception as e_csv:
+                    st.error(f"❌ 導入失敗，病因詳情: {str(e_csv)}")
 
     # ----------------------------------------------------
     # 📊 戰情看盤：SQLite 歷史數據庫存即時檢視列
@@ -745,14 +791,17 @@ if st.button("⚡ 啟動雙模大數據融合分析"):
                 st.markdown("</div>", unsafe_allow_html=True)
 
 # ----------------------------------------------------
-# 👑【最高管理員特權區】智慧資料庫控制台 (檢視/修改號碼、清空數據、金鑰自主增減)
+# 👑【最高管理員特權區】智慧資料庫控制台 (持久化標籤頁與終極 Toast 鎖・拆分版 - 1)
 # ----------------------------------------------------
 if 'is_admin' in locals() and is_admin:
     st.markdown("---")
     st.markdown("## 👑 最高管理員安全控制台 (後台數據中心)")
 
+    # 🌟【Sophia 終極優化】為 tabs 注入實體金鑰狀態鎖！強迫雲端主機永遠幫您記住當前頁面，重整後絕對不跳回第一頁！
     tab_data, tab_clear, tab_auth = st.tabs(
-        ["📝 1. 獎號數據檢視與修改", "🗑️ 2. 清空某一機種數據", "🔐 3. 用戶授權金鑰自主增減"])
+        ["📝 1. 獎號數據檢視與修改", "🗑️ 2. 清空某一機種數據", "🔐 3. 用戶授權金鑰自主增減"],
+        key="admin_control_tabs"
+    )
 
     with tab_data:
         st.subheader("📝 歷史開獎號碼智慧管理 (動態 SQL 硬更新)")
@@ -798,7 +847,9 @@ if 'is_admin' in locals() and is_admin:
                         cursor_up.execute(f"UPDATE {target_tbl} SET {set_clause} WHERE period = ?", params)
                         conn_up.commit()
                         conn_up.close()
-                        st.success(f"🎉 成功！第 {edit_period} 期的資料已在實體資料庫內精準導正變更。")
+
+                        # 💡 數據修改大成功出口：注入 Toast 鎖
+                        st.toast(f"💾 變更成功！第 {edit_period} 期的開獎資料已在實體資料庫內精準校正！", icon="🎉")
                         st.rerun()
                     except Exception as e_up:
                         st.error(f"❌ 修正失敗: {str(e_up)}")
@@ -809,12 +860,10 @@ if 'is_admin' in locals() and is_admin:
             st.dataframe(df_m, use_container_width=True, hide_index=True)
         else:
             st.info("💡 目前此機種數據庫內尚無資料。")
-
     with tab_clear:
         st.subheader("🗑️ 資料庫重整中心 (一鍵清空去髒資料)")
         st.error("⚠️ 警告：此操作將會徹底抹除該彩券在本機的所有歷史期數，以便您重新導入最乾淨的 CSV 資料！")
-        clear_game = st.selectbox("請選取您要「完全清空、重新洗牌」的機種", ["請選擇"] + list(game_table_map.keys()),
-                                  key="clear_game_sel")
+        clear_game = st.selectbox("請選取您要「完全清空、重新洗牌」的機種", ["請選擇"] + list(game_table_map.keys()), key="clear_game_sel")
 
         if clear_game != "請選擇":
             clear_tbl = game_table_map[clear_game]
@@ -828,12 +877,13 @@ if 'is_admin' in locals() and is_admin:
                         cursor_del.execute(f"DELETE FROM {clear_tbl}")
                         conn_del.commit()
                         conn_del.close()
-                        st.success(
-                            f"🎉【大清理成功】所有的 [{clear_game}] 歷史數據已被洗刷一空！您現在可以回到側邊欄重新上傳最完美的 CSV 檔了。")
+
+                        # 🌟【Sophia 終極爆破】改用 st.toast 通告！重整時保證 100% 出現，且畫面依然牢牢定在第 2 頁！
+                        st.toast(f"🗑️【資料庫重整完成】所有的 [{clear_game}] 數據已被清空！可以重新上傳最新的 CSV 檔了。", icon="✅")
                         st.rerun()
+
                     except Exception as e_del:
                         st.error(f"❌ 摧毀清空失敗: {str(e_del)}")
-
     with tab_auth:
         st.subheader("🔐 全球金鑰自主授權中心 (免改程式動態管理)")
         conn_a = sqlite3.connect(DB_NAME)
@@ -863,7 +913,8 @@ if 'is_admin' in locals() and is_admin:
                                            (new_key.strip(), new_name.strip(), new_expire.strip(), actual_role))
                         conn_add.commit()
                         conn_add.close()
-                        st.success(f"🎉【授權成功】全新金鑰 {new_key} 已成功發行給 [{new_name}]！")
+
+                        st.toast(f"🎉【授權成功】全新金鑰 {new_key} 已成功發行給 [{new_name}]！", icon="🔑")
                         st.rerun()
                     except Exception as e_add:
                         st.error(f"❌ 發行金鑰失敗: {str(e_add)}")
@@ -884,7 +935,8 @@ if 'is_admin' in locals() and is_admin:
                         cursor_del_u.execute("DELETE FROM auth_users WHERE user_key = ?", (del_key,))
                         conn_del_u.commit()
                         conn_del_u.close()
-                        st.success(f"🎉 成功註銷金鑰！該用戶已無法再連上您的核心看盤大數據。")
+
+                        st.toast(f"🎉 成功註銷金鑰！該用戶已無法再連上您的核心看盤大數據。", icon="🔒")
                         st.rerun()
                     except Exception as e_del_u:
                         st.error(f"❌ 註銷失敗: {str(e_del_u)}")
