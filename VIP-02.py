@@ -34,7 +34,7 @@ for g_key, b_list in GRP_CONFIG.items():
     GRP_LABEL_MAP[g_key] = f"({', '.join([f'{x:02d}' for x in b_list])})"
 
 # 設置商業級高質感全設備靠左網頁配置
-st.set_page_config(page_title="👑 AI 雙模融合・VIP 02 雙算力戰情室", layout="wide")
+st.set_page_config(page_title="👑 AI 雙模融合・VIP 戰情室", layout="wide")
 
 # ====================================================
 # 🔐【Sophia 終極特權鎖】JS 影子節點監聽・Deploy 按鈕全網惡意強行抹除 (100% 根除)
@@ -153,7 +153,7 @@ if not st.session_state["vip2_authenticated"]:
 # ====================================================
 # 🎛️ Sidebar 控制面板中心 (左側控制區)
 # ====================================================
-st.sidebar.title("👑 VIP II 雙算力戰情室")
+st.sidebar.title("👑 VIP 雙算力戰情室")
 st.sidebar.info(f"👤 當前用戶: {st.session_state['vip2_username']}")
 
 game_map = {"今彩 539": "lotto_539", "大樂透": "lotto_649", "威力彩": "lotto_super", "3星彩": "lotto_3d",
@@ -176,7 +176,10 @@ calc_mode = st.sidebar.radio(
 st.sidebar.markdown("---")
 st.sidebar.subheader("📊 擴充算力主控台")
 # 填入您目前官方綁定 app-v11.py 的那個實體雲端網址
-st.sidebar.markdown('<a href="https://streamlit.app" target="_blank"><button style="width:100%; border-radius:5px; background-color:#1E88E5; color:white; border:none; padding:8px; cursor:pointer;">🚀 啟動原本標準雙模融合看板</button></a>', unsafe_allow_html=True)
+# st.sidebar.markdown('<a href="https://streamlit.app" target="_blank"><button style="width:100%; border-radius:5px; background-color:#1E88E5; color:white; border:none; padding:8px; cursor:pointer;">🚀 啟動原本標準雙模融合看板</button></a>', unsafe_allow_html=True)
+# 🟢【Sophia 實體對齊】精準配置您專屬的 GitHub 儲存庫 app-v11.py 官方雲端獨立分頁門牌超連結！
+st.sidebar.markdown('<a href="https://streamlit.app" target="_blank"><button style="width:100%; border-radius:5px; background-color:#1E88E5; color:white; border:none; padding:8px; cursor:pointer; font-weight:bold;">🚀 啟動原本標準雙模融合看板</button></a>', unsafe_allow_html=True)
+
 
 if st.sidebar.button("🔒 登出安全戰情室"):
     st.session_state["vip2_authenticated"] = False
