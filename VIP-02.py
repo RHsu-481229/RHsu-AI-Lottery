@@ -176,14 +176,12 @@ calc_mode = st.sidebar.radio(
 st.sidebar.markdown("---")
 st.sidebar.subheader("📊 擴充算力主控台")
 # ====================================================
-# 🟢【Sophia 終極防吃字黑科技】子母網頁平行並存直達傳送門 (100% 繞過過濾器阻斷)
+# 🟢【Sophia 實體新門牌對齊】一秒直達原本充滿大數據漸層熱圖的平行看盤主控台！
 # ====================================================
-# 💡 將實體雲端舊網址與副路由參數精密拼接，保證另開新分頁直達大熱圖平台！
-base_cloud_url = "https://lottery-twn.streamlit.app"
-sub_routing_param = "/~/+/app-v11.py"
-final_target_link = base_cloud_url + sub_routing_param
+# 💡 將您剛剛在 Streamlit 重新申請好、專屬於 app-v11.py 的全新雲端實體獨立網址填入下方！
+final_target_link = "https://lottery-twn2.streamlit.app"
 
-# 實體將對齊好的網址注入高質感藍色接駁按鈕中
+# 實體將對齊好的新獨立網址注入高質感藍色接駁按鈕中
 st.sidebar.markdown(f'<a href="{final_target_link}" target="_blank"><button style="width:100%; border-radius:5px; background-color:#1E88E5; color:white; border:none; padding:8px; cursor:pointer; font-weight:bold;">🚀 啟動原本標準雙模融合看板</button></a>', unsafe_allow_html=True)
 # ====================================================
 
