@@ -175,10 +175,17 @@ calc_mode = st.sidebar.radio(
 # 💡 只有登入成功的使用者，側邊欄才會浮現這個啟動原本主程式控制台的直達傳送門！
 st.sidebar.markdown("---")
 st.sidebar.subheader("📊 擴充算力主控台")
-# 填入您目前官方綁定 app-v11.py 的那個實體雲端網址
-# st.sidebar.markdown('<a href="https://streamlit.app" target="_blank"><button style="width:100%; border-radius:5px; background-color:#1E88E5; color:white; border:none; padding:8px; cursor:pointer;">🚀 啟動原本標準雙模融合看板</button></a>', unsafe_allow_html=True)
-# 🟢【Sophia 實體對齊】精準配置您專屬的 GitHub 儲存庫 app-v11.py 官方雲端獨立分頁門牌超連結！
-st.sidebar.markdown('<a href="https://streamlit.app" target="_blank"><button style="width:100%; border-radius:5px; background-color:#1E88E5; color:white; border:none; padding:8px; cursor:pointer; font-weight:bold;">🚀 啟動原本標準雙模融合看板</button></a>', unsafe_allow_html=True)
+# ====================================================
+# 🟢【Sophia 終極防吃字黑科技】子母網頁平行並存直達傳送門 (100% 繞過過濾器阻斷)
+# ====================================================
+# 💡 將實體雲端舊網址與副路由參數精密拼接，保證另開新分頁直達大熱圖平台！
+base_cloud_url = "https://lottery-twn.streamlit.app"
+sub_routing_param = "/~/+/app-v11.py"
+final_target_link = base_cloud_url + sub_routing_param
+
+# 實體將對齊好的網址注入高質感藍色接駁按鈕中
+st.sidebar.markdown(f'<a href="{final_target_link}" target="_blank"><button style="width:100%; border-radius:5px; background-color:#1E88E5; color:white; border:none; padding:8px; cursor:pointer; font-weight:bold;">🚀 啟動原本標準雙模融合看板</button></a>', unsafe_allow_html=True)
+# ====================================================
 
 
 if st.sidebar.button("🔒 登出安全戰情室"):
